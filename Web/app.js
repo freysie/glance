@@ -91,7 +91,11 @@ async function negotiate() {
     return;
   }
   if (!res.ok) {
-    say(`App said no (HTTP ${res.status}) — stream over or wrong id?`);
+    if (res.status === 403) {
+      say("Rejected (403) — this page must be served from http://localhost:8888");
+    } else {
+      say(`App said no (HTTP ${res.status}) — stream over or wrong id?`);
+    }
     retryEl.hidden = false;
     pc.close();
     return;

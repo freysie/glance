@@ -10,20 +10,21 @@ struct GlanceApp: App {
     WindowGroup {
       ContentView()
         .environmentObject(AppState.shared)
+        .environment(delegate)
     }
     .windowResizability(.contentSize)
   }
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, Observable {
   private let state = AppState.shared
   private let selection = SelectionController()
   private let recorder = ScreenRecorder()
   private let statusBar = StatusBarController()
   private let streamer = WebRTCStreamer()
   private let signaling = SignalingServer()
-  private var isStopping = false
+  @ObservationIgnored private var isStopping = false
 
   func applicationWillFinishLaunching(_ notification: Notification) {
     // Only ever one Glance: a second copy makes every button/menu act on the

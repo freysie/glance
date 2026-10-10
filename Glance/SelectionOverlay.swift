@@ -39,9 +39,11 @@ final class SelectionController {
       window.backgroundColor = .clear
       window.isOpaque = false
       window.hasShadow = false
+      window.isMovable = false
       window.level = .screenSaver
       window.ignoresMouseEvents = false
       window.acceptsMouseMovedEvents = true
+      window.setValue(true, forKey: "allowsCursorRectsWhenInactive")
       window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
       window.isReleasedWhenClosed = false
       window.animationBehavior = .none

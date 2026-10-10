@@ -4,6 +4,7 @@ import SwiftUI
 
 struct ContentView: View {
   @EnvironmentObject var state: AppState
+  @Environment(AppDelegate.self) var delegate
   @State private var now = Date()
   private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
 
@@ -79,7 +80,7 @@ struct ContentView: View {
             .foregroundStyle(.secondary)
         case .recording:
           Button("Stop Recording") {
-            Task { await (NSApp.delegate as? AppDelegate)?.stopRecording() }
+            Task { await delegate.stopRecording() }
           }
           .keyboardShortcut(".", modifiers: .command)
           .buttonStyle(.borderedProminent)
@@ -90,11 +91,11 @@ struct ContentView: View {
             }
           }
           Button("Record Again") {
-            (NSApp.delegate as? AppDelegate)?.startSelection()
+            delegate.startSelection()
           }
         case .failed, .idle:
           Button("Select Region") {
-            (NSApp.delegate as? AppDelegate)?.startSelection()
+            delegate.startSelection()
           }
           .buttonStyle(.borderedProminent)
           if state.phase == .failed {

@@ -30,6 +30,14 @@ enum OfferResult {
   case failure(String)
 }
 
+/// Origins allowed to negotiate for a stream. Without this, any web page you
+/// happen to visit could watch your screen region by POSTing to :8899.
+/// localhost and 127.0.0.1 are the same page served by python, so both are fine.
+private let allowedOrigins: Set<String> = [
+  "http://localhost:8888",
+  "http://127.0.0.1:8888",
+]
+
 /// Minimal HTTP/1.1 server on 127.0.0.1 for WebRTC signaling.
 /// Handles OPTIONS (CORS preflight), POST /api/offer and GET /api/status.
 /// Everything else 404s. Connections are closed after one response.
@@ -143,13 +151,14 @@ final class SignalingServer {
 
   private func route(_ connection: NWConnection, headerData: Data, remainder: Data) {
     guard let head = String(data: headerData, encoding: .utf8) else {
-      send(connection, status: 400, json: ["error": "bad request"])
+      // Too malformed to have parsed headers: no CORS grant by definition.
+      send(connection, status: 400, json: ["error": "bad request"], origin: nil)
       return
     }
     let lines = head.components(separatedBy: "\r\n")
     let requestLine = lines.first?.components(separatedBy: " ") ?? []
     guard requestLine.count >= 2 else {
-      send(connection, status: 400, json: ["error": "bad request"])
+      send(connection, status: 400, json: ["error": "bad request"], origin: nil)
       return
     }
     let method = requestLine[0].uppercased()
@@ -161,54 +170,71 @@ final class SignalingServer {
       }
       if parts.count == 2 { headers[parts[0].lowercased()] = parts[1] }
     }
+    let origin = headers["origin"] ?? ""
+    let originOk = allowedOrigins.contains(origin)
 
+    // Preflight: only bless origins we'd actually accept, and tell the browser
+    // so a blocked page fails fast with a readable error.
     if method == "OPTIONS" {
-      send(connection, status: 204, json: Optional<[String: String]>.none)
+      send(
+        connection, status: 204, json: Optional<[String: String]>.none,
+        origin: originOk ? origin : nil)
       return
     }
 
     if method == "GET", target == "/api/ping" || target.hasPrefix("/api/ping?") {
-      send(connection, status: 200, json: ["ok": "true"])
+      // Unauthenticated on purpose: reveals nothing and is handy from a terminal.
+      send(connection, status: 200, json: ["ok": "true"], origin: originOk ? origin : nil)
+      return
+    }
+
+    // Everything past here is introspection or screen access: require a trusted origin.
+    if !originOk {
+      NSLog("[Glance] rejected request to %@ from unexpected origin %@", target, origin)
+      send(
+        connection, status: 403,
+        json: ["error": "origin not allowed — serve the page from http://localhost:8888"],
+        origin: nil)
       return
     }
 
     if method == "GET", target.hasPrefix("/api/status") {
       let id = queryParam(target, name: "stream") ?? ""
       let snapshot = statusProvider?(id) ?? StatusSnapshot(live: false, viewers: 0)
-      send(connection, status: 200, json: snapshot)
+      send(connection, status: 200, json: snapshot, origin: origin)
       return
     }
 
     if method == "POST", target == "/api/offer" || target.hasPrefix("/api/offer?") {
       let length = Int(headers["content-length"] ?? "0") ?? 0
       guard length > 0, length < 4_000_000 else {
-        send(connection, status: 400, json: ["error": "bad body"])
+        send(connection, status: 400, json: ["error": "bad body"], origin: origin)
         return
       }
       readBody(connection, remainder: remainder, length: length) { body in
         Task { @MainActor in
-          await self.answerOffer(connection, body: body)
+          await self.answerOffer(connection, body: body, origin: origin)
         }
       }
       return
     }
 
-    send(connection, status: 404, json: ["error": "not found"])
+    send(connection, status: 404, json: ["error": "not found"], origin: origin)
   }
 
-  private func answerOffer(_ connection: NWConnection, body: Data) async {
+  private func answerOffer(_ connection: NWConnection, body: Data, origin: String?) async {
     guard let offer = try? JSONDecoder().decode(OfferRequest.self, from: body) else {
-      send(connection, status: 400, json: ["error": "bad offer json"])
+      send(connection, status: 400, json: ["error": "bad offer json"], origin: origin)
       return
     }
     let result = await onOffer?(offer) ?? .noStream
     switch result {
     case .answer(let sdp):
-      send(connection, status: 200, json: ["sdp": sdp, "type": "answer"])
+      send(connection, status: 200, json: ["sdp": sdp, "type": "answer"], origin: origin)
     case .noStream:
-      send(connection, status: 404, json: ["error": "no such live stream"])
+      send(connection, status: 404, json: ["error": "no such live stream"], origin: origin)
     case .failure(let message):
-      send(connection, status: 500, json: ["error": message])
+      send(connection, status: 500, json: ["error": message], origin: origin)
     }
   }
 
@@ -224,7 +250,9 @@ final class SignalingServer {
 
   // MARK: - Responses
 
-  private func send<T: Encodable>(_ connection: NWConnection, status: Int, json: T?) {
+  private func send<T: Encodable>(
+    _ connection: NWConnection, status: Int, json: T?, origin: String?
+  ) {
     var body = Data()
     if let json, let encoded = try? JSONEncoder().encode(json) {
       body = encoded
@@ -234,13 +262,18 @@ final class SignalingServer {
     case 200: reason = "OK"
     case 204: reason = "No Content"
     case 400: reason = "Bad Request"
+    case 403: reason = "Forbidden"
     case 404: reason = "Not Found"
     default: reason = "Error"
     }
-    var head =
-      "HTTP/1.1 \(status) \(reason)\r\n" + "Access-Control-Allow-Origin: *\r\n"
-      + "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-      + "Access-Control-Allow-Headers: Content-Type\r\n"
+    var head = "HTTP/1.1 \(status) \(reason)\r\n"
+    if let origin, allowedOrigins.contains(origin) {
+      // Narrow echo, never "*": a blocked origin gets no read grant at all.
+      head += "Access-Control-Allow-Origin: \(origin)\r\n"
+      head += "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+      head += "Access-Control-Allow-Headers: Content-Type\r\n"
+      head += "Vary: Origin\r\n"
+    }
     if body.isEmpty {
       head += "Content-Length: 0\r\n"
     } else {
