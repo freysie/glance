@@ -8,10 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		3BFA422F307AB54400EAAFE0 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 3BFA422E307AB54400EAAFE0 /* WebRTC */; };
+		3BFA4237307AC77300EAAFE0 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 3BFA4235307AC77300EAAFE0 /* index.html */; };
+		3BFA4238307AC77300EAAFE0 /* app.js in Resources */ = {isa = PBXBuildFile; fileRef = 3BFA4234307AC77300EAAFE0 /* app.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		3BFA4211307AB49D00EAAFE0 /* Glance.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Glance.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3BFA4234307AC77300EAAFE0 /* app.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = app.js; sourceTree = "<group>"; };
+		3BFA4235307AC77300EAAFE0 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -38,6 +42,7 @@
 			isa = PBXGroup;
 			children = (
 				3BFA4213307AB49D00EAAFE0 /* Glance */,
+				3BFA4236307AC77300EAAFE0 /* Web */,
 				3BFA4212307AB49D00EAAFE0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -48,6 +53,15 @@
 				3BFA4211307AB49D00EAAFE0 /* Glance.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3BFA4236307AC77300EAAFE0 /* Web */ = {
+			isa = PBXGroup;
+			children = (
+				3BFA4234307AC77300EAAFE0 /* app.js */,
+				3BFA4235307AC77300EAAFE0 /* index.html */,
+			);
+			path = Web;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -118,6 +132,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3BFA4237307AC77300EAAFE0 /* index.html in Resources */,
+				3BFA4238307AC77300EAAFE0 /* app.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

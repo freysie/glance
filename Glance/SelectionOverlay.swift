@@ -1,5 +1,10 @@
 import AppKit
 
+private final class SelectionWindow: NSWindow {
+  // This is needed for NSView cursor rects to work.
+  override var canBecomeKey: Bool { true }
+}
+
 /// Transparent full-screen overlay (one window per display) for drag-selecting
 /// a region. The rect is reported in Cocoa global screen coordinates
 /// (bottom-left origin).
@@ -24,7 +29,7 @@ final class SelectionController {
       view.controller = self
 
       // One window sized to exactly this display's frame — never a union rect.
-      let window = NSWindow(
+      let window = SelectionWindow(
         contentRect: screen.frame,
         styleMask: .borderless,
         backing: .buffered,
@@ -47,17 +52,11 @@ final class SelectionController {
         String(describing: screen.localizedName), NSStringFromRect(screen.frame))
     }
 
-    NSCursor.crosshair.push()
-    didPushCursor = true
     windows.first?.makeKey()
     NSApp.activate(ignoringOtherApps: true)
   }
 
   func hide() {
-    if didPushCursor {
-      NSCursor.pop()
-      didPushCursor = false
-    }
     for window in windows {
       window.orderOut(nil)
     }

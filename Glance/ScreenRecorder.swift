@@ -30,6 +30,7 @@ final class ScreenRecorder: NSObject, SCStreamOutput, SCStreamDelegate, @uncheck
   nonisolated(unsafe) private var _recording = false
   nonisolated(unsafe) private var _sessionStarted = false
   nonisolated(unsafe) private var _frameCount = 0
+
   nonisolated(unsafe) private var _expectedW = 0
   nonisolated(unsafe) private var _expectedH = 0
   nonisolated(unsafe) private(set) var lastWriterError: Error?
@@ -114,16 +115,19 @@ final class ScreenRecorder: NSObject, SCStreamOutput, SCStreamDelegate, @uncheck
       throw RecorderError.emptyRegion
     }
 
+    // H.264 needs even dimensions. Snap the source to the output size so the
+    // scale factor is exactly 1.0 and SCStream never resamples.
+    var outW = max(2, Int((aligned.width * scale).rounded()))
+    var outH = max(2, Int((aligned.height * scale).rounded()))
+    outW = (outW / 2) * 2
+    outH = (outH / 2) * 2
+    guard outW >= 2, outH >= 2 else { throw RecorderError.emptyRegion }
+    aligned.size = CGSize(width: CGFloat(outW) / scale, height: CGFloat(outH) / scale)
+
     // sourceRect uses a top-left origin, display-local.
     let flippedY = screenFrame.height - aligned.minY - aligned.height
     let sourceRect = CGRect(
       x: aligned.minX, y: flippedY, width: aligned.width, height: aligned.height)
-
-    // H.264 needs even dimensions.
-    var outW = Int((aligned.width * scale).rounded())
-    var outH = Int((aligned.height * scale).rounded())
-    outW = max(2, (outW / 2) * 2)
-    outH = max(2, (outH / 2) * 2)
 
     // Exclude our own windows so the overlay / main window never appears in the capture.
     let bundleID = Bundle.main.bundleIdentifier
@@ -145,6 +149,7 @@ final class ScreenRecorder: NSObject, SCStreamOutput, SCStreamDelegate, @uncheck
     config.pixelFormat = kCVPixelFormatType_32BGRA
     config.showsCursor = true
     config.capturesAudio = false
+    // Default is .automatic; ask explicitly for native pixels.
     config.captureResolution = .best
 
     let url = Self.nextOutputURL()
