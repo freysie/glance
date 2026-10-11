@@ -4,7 +4,7 @@ import Network
 /// Ports and URL helpers for local streaming.
 /// The static page is served by the user (`python3 -m http.server 8888 --directory Web`);
 /// the API below is served by the app itself for WebRTC signaling.
-enum StreamPorts {
+enum StreamPorts: Sendable {
   static let page: UInt16 = 8888
   static let api: UInt16 = 8899
 
@@ -13,18 +13,18 @@ enum StreamPorts {
   }
 }
 
-struct OfferRequest: Decodable {
+struct OfferRequest: Decodable, Sendable {
   var stream: String
   var sdp: String
   var type: String
 }
 
-struct StatusSnapshot: Encodable {
+struct StatusSnapshot: Encodable, Sendable {
   var live: Bool
   var viewers: Int
 }
 
-enum OfferResult {
+enum OfferResult: Sendable {
   case answer(sdp: String)
   case noStream
   case failure(String)
@@ -48,7 +48,8 @@ final class SignalingServer {
   private var listener: NWListener?
   private let queue = DispatchQueue(label: "glance.signaling")
 
-  func start(port: UInt16 = StreamPorts.api) {
+  func start(port: UInt16? = nil) {
+    let port = port ?? StreamPorts.api
     stop()
     do {
       let params = NWParameters.tcp
@@ -61,11 +62,11 @@ final class SignalingServer {
       NSLog("[Glance] signaling failed to listen: %@", error.localizedDescription as NSString)
       return
     }
-    listener?.newConnectionHandler = { [weak self] connection in
-      Task { @MainActor in self?.handle(connection) }
+    listener?.newConnectionHandler = { connection in
+      Task { @MainActor [weak self, connection] in self?.handle(connection) }
     }
-    listener?.stateUpdateHandler = { [weak self] state in
-      Task { @MainActor in self?.handleListenerState(state, port: port) }
+    listener?.stateUpdateHandler = { state in
+      Task { @MainActor [weak self, state] in self?.handleListenerState(state, port: port) }
     }
     listener?.start(queue: queue)
     NSLog("[Glance] signaling starting on 127.0.0.1:%d", Int(port))
@@ -97,16 +98,16 @@ final class SignalingServer {
 
   private func handle(_ connection: NWConnection) {
     connection.start(queue: queue)
-    readHeaders(connection, accumulated: Data()) { [weak self] headerData, remainder in
-      Task { @MainActor in
+    Self.readHeaders(connection, accumulated: Data()) { headerData, remainder in
+      Task { @MainActor [weak self, connection, headerData, remainder] in
         self?.route(connection, headerData: headerData, remainder: remainder)
       }
     }
   }
 
-  private func readHeaders(
+  private nonisolated static func readHeaders(
     _ connection: NWConnection, accumulated: Data,
-    completion: @escaping (Data, Data) -> Void
+    completion: @Sendable @escaping (Data, Data) -> Void
   ) {
     var acc = accumulated
     connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { data, _, _, error in
@@ -120,13 +121,13 @@ final class SignalingServer {
         connection.cancel()
         return
       }
-      self.readHeaders(connection, accumulated: acc, completion: completion)
+      Self.readHeaders(connection, accumulated: acc, completion: completion)
     }
   }
 
-  private func readBody(
+  private nonisolated static func readBody(
     _ connection: NWConnection, remainder: Data, length: Int,
-    completion: @escaping (Data) -> Void
+    completion: @Sendable @escaping (Data) -> Void
   ) {
     var acc = remainder
     if acc.count >= length {
@@ -139,7 +140,7 @@ final class SignalingServer {
       if acc.count >= length {
         completion(acc.prefix(length))
       } else {
-        self.readBody(connection, remainder: acc, length: length, completion: completion)
+        Self.readBody(connection, remainder: acc, length: length, completion: completion)
       }
     }
   }
@@ -208,9 +209,9 @@ final class SignalingServer {
         send(connection, status: 400, json: ["error": "bad body"], origin: origin)
         return
       }
-      readBody(connection, remainder: remainder, length: length) { body in
-        Task { @MainActor in
-          await self.answerOffer(connection, body: body, origin: origin)
+      Self.readBody(connection, remainder: remainder, length: length) { body in
+        Task { @MainActor [weak self, connection, body, origin] in
+          await self?.answerOffer(connection, body: body, origin: origin)
         }
       }
       return
