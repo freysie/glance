@@ -25,10 +25,12 @@ struct ContentView: View {
           .fixedSize(horizontal: false, vertical: true)
       }
 
-      Text(state.statusMessage)
-        .font(.body)
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
+      if let status = state.statusMessage {
+        Text(status)
+          .font(.body)
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+      }
 
       if state.phase == .recording, let start = state.recordingStart {
         Text(
@@ -122,7 +124,7 @@ struct ContentView: View {
     switch state.phase {
     case .idle: return "Glance"
     case .selecting: return "Select a Region"
-    case .recording: return "Recording"
+    case .recording: return "Recording…"
     case .finished: return "Saved"
     case .failed: return "Something Failed"
     }

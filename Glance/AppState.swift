@@ -17,7 +17,7 @@ final class AppState {
   static let shared = AppState()
 
   var phase: Phase = .idle
-  var statusMessage: String = "Starting…"
+  var statusMessage: String? = "Starting…"
   var recordingURL: URL?
   var errorMessage: String?
   var recordingStart: Date?
@@ -36,7 +36,7 @@ final class AppState {
     phase = .recording
     selectionRect = rect
     recordingStart = Date()
-    statusMessage = "Recording…"
+    statusMessage = nil
     errorMessage = nil
   }
 
@@ -44,11 +44,11 @@ final class AppState {
     phase = .finished
     recordingURL = url
     recordingStart = nil
-    statusMessage = "Saved."
+    statusMessage = nil
     errorMessage = nil
   }
 
-  func setIdle(_ message: String = "Ready.") {
+  func setIdle(_ message: String? = nil) {
     phase = .idle
     statusMessage = message
     recordingStart = nil
@@ -58,7 +58,7 @@ final class AppState {
   func setFailed(_ message: String) {
     phase = .failed
     errorMessage = message
-    statusMessage = "Failed."
+    statusMessage = nil
     recordingStart = nil
   }
 }
