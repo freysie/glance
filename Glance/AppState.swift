@@ -1,10 +1,11 @@
-import Combine
 import CoreGraphics
 import Foundation
+import Observation
 
 /// Shared UI state between SwiftUI, the selection overlay, the recorder and the status item.
 @MainActor
-final class AppState: ObservableObject {
+@Observable
+final class AppState {
   enum Phase: Equatable {
     case idle
     case selecting
@@ -15,14 +16,14 @@ final class AppState: ObservableObject {
 
   static let shared = AppState()
 
-  @Published var phase: Phase = .idle
-  @Published var statusMessage: String = "Starting…"
-  @Published var recordingURL: URL?
-  @Published var errorMessage: String?
-  @Published var recordingStart: Date?
-  @Published var selectionRect: CGRect = .zero
-  @Published var streamId: String?
-  @Published var signalingError: String?
+  var phase: Phase = .idle
+  var statusMessage: String = "Starting…"
+  var recordingURL: URL?
+  var errorMessage: String?
+  var recordingStart: Date?
+  var selectionRect: CGRect = .zero
+  var streamId: String?
+  var signalingError: String?
 
   func setSelecting() {
     phase = .selecting

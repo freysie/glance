@@ -3,7 +3,7 @@ import Combine
 import SwiftUI
 
 struct ContentView: View {
-  @EnvironmentObject var state: AppState
+  @Environment(AppState.self) private var state
   @Environment(AppDelegate.self) var delegate
   @State private var now = Date()
   private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
@@ -18,8 +18,8 @@ struct ContentView: View {
           .font(.headline)
       }
 
-      if let sigErr = state.signalingError {
-        Text(sigErr)
+      if let error = state.signalingError {
+        Text(error)
           .font(.callout)
           .foregroundStyle(.orange)
           .fixedSize(horizontal: false, vertical: true)
@@ -35,12 +35,13 @@ struct ContentView: View {
           "Elapsed \(elapsed(since: start)) — \(Int(state.selectionRect.width)) × \(Int(state.selectionRect.height)) pt"
         )
         .font(.callout.monospacedDigit())
+
         if let id = state.streamId {
-          Link(
-            "Open stream: http://localhost:\(StreamPorts.page)/?stream=\(id)",
-            destination: StreamPorts.pageURL(streamId: id)
-          )
+          Link(destination: StreamPorts.pageURL(streamId: id)) {
+            Text(verbatim: "Open stream: http://localhost:\(StreamPorts.page)/?stream=\(id)")
+          }
           .font(.callout)
+
           HStack(spacing: 8) {
             Button("Copy Link") {
               NSPasteboard.general.clearContents()
@@ -49,11 +50,13 @@ struct ContentView: View {
             }
             .buttonStyle(.link)
           }
-          Text("Serve the page first: python3 -m http.server \(StreamPorts.page) --directory Web")
+
+          Text(verbatim: "Serve the page first: python3 -m http.server \(StreamPorts.page) --directory Web")
             .font(.caption.monospaced())
             .textSelection(.enabled)
             .foregroundStyle(.secondary)
         }
+
         Text("Tip: Click the red dot in the menu bar to stop.")
           .font(.caption)
           .foregroundStyle(.secondary)

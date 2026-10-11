@@ -63,7 +63,7 @@ final class WebRTCStreamer: NSObject, @unchecked Sendable {
     let (old, timers): ([RTCPeerConnection], [DispatchSourceTimer]) = lock.withLock {
       let p = peers
       peers = []
-      gatheringWaits = [:]
+      gatheringWaits = [:] // FIXME
       let t = Array(statsTimers.values)
       statsTimers = [:]
       return (p, t)
@@ -156,8 +156,7 @@ final class WebRTCStreamer: NSObject, @unchecked Sendable {
   /// and degrade framerate — never resolution — under pressure. Must run once
   /// encodings exist (i.e. after negotiation), so it's applied on connect.
   nonisolated static func applySenderParams(to sender: RTCRtpSender) {
-    var params = sender.parameters
-    if let encoding = params.encodings.first {
+    if let encoding = sender.parameters.encodings.first {
       encoding.maxBitrateBps = 12_000_000 as NSNumber
       // A real floor, not a suggestion: loopback has infinite bandwidth, and
       // without this the allocator idles near zero and text turns to soup.
@@ -166,10 +165,10 @@ final class WebRTCStreamer: NSObject, @unchecked Sendable {
     } else {
       NSLog("[Glance] WARNING: sender has no encodings yet, bitrate not applied")
     }
-    params.degradationPreference = NSNumber(
+    sender.parameters.degradationPreference = NSNumber(
       value: RTCDegradationPreference.maintainResolution.rawValue)
-    sender.parameters = params
   }
+
   nonisolated static func preferH264(_ sdp: String) -> String? {
     let lines = sdp.components(separatedBy: "\n").map {
       $0.trimmingCharacters(in: CharacterSet.newlines)

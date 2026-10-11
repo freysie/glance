@@ -1,5 +1,7 @@
 import AppKit
 
+// TODO: make right-click menu function like system menu extras (right mouse down, not up), or remove it
+
 /// Menu-bar item visible while the app runs.
 /// Left-click performs the primary action (stop while recording, otherwise
 /// start selecting). Right-click (or Ctrl-click) shows a small menu.
@@ -52,7 +54,7 @@ final class StatusBarController {
     update(recording: false, canReveal: false)
   }
 
-  /// - recording: red recording dot, tooltip says click to stop.
+  /// - recording: red recording dot.
   /// - canReveal: enables "Show in Finder".
   func update(recording: Bool, canReveal: Bool) {
     stopItem?.isHidden = !recording
@@ -62,10 +64,8 @@ final class StatusBarController {
     // light/dark menu bars), the recording dot is solid red (visible on both).
     if recording {
       button.image = statusImage(filled: true, color: .systemRed, template: false)
-      button.toolTip = "Click to stop recording"
     } else {
       button.image = statusImage(filled: false, color: .black, template: true)
-      button.toolTip = "Glance — click to select a region"
     }
     button.title = ""
     button.contentTintColor = nil

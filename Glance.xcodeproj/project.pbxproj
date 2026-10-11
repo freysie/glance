@@ -10,12 +10,14 @@
 		3BFA422F307AB54400EAAFE0 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 3BFA422E307AB54400EAAFE0 /* WebRTC */; };
 		3BFA4237307AC77300EAAFE0 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 3BFA4235307AC77300EAAFE0 /* index.html */; };
 		3BFA4238307AC77300EAAFE0 /* app.js in Resources */ = {isa = PBXBuildFile; fileRef = 3BFA4234307AC77300EAAFE0 /* app.js */; };
+		3BFA423A307BA9AD00EAAFE0 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 3BFA4239307BA9AD00EAAFE0 /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		3BFA4211307AB49D00EAAFE0 /* Glance.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Glance.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BFA4234307AC77300EAAFE0 /* app.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = app.js; sourceTree = "<group>"; };
 		3BFA4235307AC77300EAAFE0 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		3BFA4239307BA9AD00EAAFE0 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -41,6 +43,7 @@
 		3BFA4208307AB49D00EAAFE0 = {
 			isa = PBXGroup;
 			children = (
+				3BFA4239307BA9AD00EAAFE0 /* README.md */,
 				3BFA4213307AB49D00EAAFE0 /* Glance */,
 				3BFA4236307AC77300EAAFE0 /* Web */,
 				3BFA4212307AB49D00EAAFE0 /* Products */,
@@ -133,6 +136,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3BFA4237307AC77300EAAFE0 /* index.html in Resources */,
+				3BFA423A307BA9AD00EAAFE0 /* README.md in Resources */,
 				3BFA4238307AC77300EAAFE0 /* app.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -271,8 +275,9 @@
 		3BFA421D307AB49E00EAAFE0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = GlanceAppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -302,8 +307,9 @@
 		3BFA421E307AB49E00EAAFE0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = GlanceAppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;

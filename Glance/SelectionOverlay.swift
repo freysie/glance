@@ -99,6 +99,11 @@ private final class SelectionView: NSView {
 
   // MARK: - Mouse
 
+  // This is needed to support multiple displays.
+  override func mouseMoved(with event: NSEvent) {
+    NSCursor.crosshair.set()
+  }
+
   override func mouseDown(with event: NSEvent) {
     startScreenPoint = screenPoint(for: event)
     currentScreenPoint = startScreenPoint
@@ -172,7 +177,7 @@ private final class SelectionView: NSView {
       y: selectionScreen.minY - window.frame.origin.y,
       width: selectionScreen.width,
       height: selectionScreen.height
-    )
+    ).integral
 
     // Dark under-stroke so the rect reads on light backgrounds, white on top.
     NSColor.black.withAlphaComponent(0.5).setStroke()

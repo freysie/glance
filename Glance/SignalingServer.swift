@@ -30,9 +30,6 @@ enum OfferResult {
   case failure(String)
 }
 
-/// Origins allowed to negotiate for a stream. Without this, any web page you
-/// happen to visit could watch your screen region by POSTing to :8899.
-/// localhost and 127.0.0.1 are the same page served by python, so both are fine.
 private let allowedOrigins: Set<String> = [
   "http://localhost:8888",
   "http://127.0.0.1:8888",

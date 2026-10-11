@@ -9,7 +9,7 @@ struct GlanceApp: App {
   var body: some Scene {
     WindowGroup {
       ContentView()
-        .environmentObject(AppState.shared)
+        .environment(AppState.shared)
         .environment(delegate)
     }
     .windowResizability(.contentSize)
@@ -17,7 +17,8 @@ struct GlanceApp: App {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, Observable {
+@Observable
+final class AppDelegate: NSObject, NSApplicationDelegate {
   private let state = AppState.shared
   private let selection = SelectionController()
   private let recorder = ScreenRecorder()
@@ -25,21 +26,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, Observable {
   private let streamer = WebRTCStreamer()
   private let signaling = SignalingServer()
   @ObservationIgnored private var isStopping = false
-
-  func applicationWillFinishLaunching(_ notification: Notification) {
-    // Only ever one Glance: a second copy makes every button/menu act on the
-    // "wrong" instance and steals confusion (and ports). Yield to the running one.
-    let me = NSRunningApplication.current.processIdentifier
-    if let bundleID = Bundle.main.bundleIdentifier {
-      let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-        .filter { $0.processIdentifier != me }
-      if let other = others.first {
-        NSLog("[Glance] another instance is running, activating it and quitting")
-        other.activate()
-        NSApp.terminate(nil)
-      }
-    }
-  }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     signaling.statusProvider = { [weak self] requestedId in
